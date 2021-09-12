@@ -14,6 +14,14 @@ VALUES
 (3, 'Engineer', 60000, 3),
 (4, 'Manager', 100000, 4);
 
+-- managers
+INSERT INTO managers (id, first_name, last_name)
+VALUES
+(1, 'Jeb', 'Kerman'),
+(2, 'Bob', 'Kerman'),
+(3, 'Bill', 'Kerman'),
+(4, 'Player', 'One');
+
 -- employees
 INSERT INTO employees (id, first_name, last_name, role_id, manager_id)
 VALUES 
@@ -21,3 +29,4 @@ VALUES
 (2, 'Bob', 'Kerman', 3, 4),
 (3, 'Bill', 'Kerman', 3, 4),
 (4, 'Player', 'One', 4, 4);
+

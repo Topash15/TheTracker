@@ -2,6 +2,7 @@
 const inquirer = require("inquirer");
 const mysql = require("mysql2");
 const cTable = require("console.table");
+// const ConfirmPrompt = require("inquirer/lib/prompts/confirm");
 
 // Connect to database
 const db = mysql.createConnection(
@@ -17,17 +18,16 @@ const db = mysql.createConnection(
 );
 
 // required to make queries work as promises
-function queryPromise(query, values){
-  return new Promise((resolve, reject)=>{
-    db.query(query, values, (err, rows)=>{
+function queryPromise(query, values) {
+  return new Promise((resolve, reject) => {
+    db.query(query, values, (err, rows) => {
       if (err) {
         return reject(err);
       }
       return resolve(rows);
-    })
-  })
+    });
+  });
 }
-
 
 // creates array of employee names
 // each employee name is associated with its id number
@@ -36,27 +36,32 @@ async function getEmployeeNames() {
   const rows = await queryPromise(query);
 
   let employees = [];
-  for(const row of rows) {
-      let fullName = row.first_name + " " + row.last_name;
-      employees.push({
-        name: fullName,
-        value: row.id
-      });
+  for (const row of rows) {
+    let fullName = row.first_name + " " + row.last_name;
+    employees.push({
+      name: fullName,
+      value: row.id,
+    });
   }
 
-  return employees
-};
+  return employees;
+}
 
+async function getManagerNames() {
+  let query = "SELECT id, first_name, last_name FROM employees";
+  const rows = await queryPromise(query);
 
-// -------------------------testing-------------------------------//
-// async function test(){
-//   const result = await getRoleNames();
-//   console.log(result);
-// };
+  let managers = [];
+  for (const row of rows) {
+    let fullName = row.first_name + " " + row.last_name;
+    managers.push({
+      name: fullName,
+      value: row.id,
+    });
+  }
 
-// test();
-
-// --------------------------testing-----------------------------//
+  return managers;
+}
 
 // creates array of role names
 async function getRoleNames() {
@@ -64,11 +69,11 @@ async function getRoleNames() {
   const rows = await queryPromise(query);
 
   let roles = [];
-  for(const row of rows) {
-      roles.push({
-        name: row.title,
-        value: row.id
-      });
+  for (const row of rows) {
+    roles.push({
+      name: row.title,
+      value: row.id,
+    });
   }
 
   return roles;
@@ -81,11 +86,11 @@ async function getDeptNames() {
   const rows = await queryPromise(query);
 
   let departments = [];
-  for(const row of rows) {
-      departments.push({
-        name: row.name,
-        value: row.id
-      });
+  for (const row of rows) {
+    departments.push({
+      name: row.name,
+      value: row.id,
+    });
   }
 
   return departments;
@@ -93,46 +98,59 @@ async function getDeptNames() {
 
 // view all employees
 async function viewEmployees() {
-  const query = "SELECT * FROM employees";
+  const query =
+    "SELECT employees.id AS employee_id, employees.first_name AS first_name, employees.last_name AS last_name, roles.title AS title, roles.salary AS salary, departments.name AS department, managers.first_name AS manager_first_name, managers.last_name AS manager_last_name FROM employees  JOIN roles ON employees.role_id = roles.id JOIN managers ON employees.manager_id = managers.id JOIN departments ON roles.department_id = departments.id;";
   const result = await queryPromise(query);
   console.table(result);
-  init();
+  // prompts to continue or close app
+  continuePrompt();
 }
 
 // view all departments
 async function viewDept() {
-  console.log('loading all departments...');
-  const query = "SELECT * FROM departments"
+  console.log("loading all departments...");
+  const query = "SELECT * FROM departments";
   const result = await queryPromise(query);
-    console.table(result);
-    init();
+  console.table(result);
+  continuePrompt();
 }
 
 // viewDept();
 
 // view all roles
 async function viewRoles() {
-  const query = "SELECT * FROM roles"
+  const query = "SELECT * FROM roles";
   const result = await queryPromise(query);
-    console.table(result);
-    init();
+  console.table(result);
+  continuePrompt();
 }
-
-// const employeeTest = ["Valentina", "Kerman", "2", "4"];
 
 // query add employee to data base
 async function addEmployee(values) {
-  const query = "INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)"
+  console.log(values);
+  const query =
+    "INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)";
   // creates array with values input by the user
-  const input = [ values.employeeFirstName, values.employeeLastName, values.employeeRole, values.Manager ]
+  const input = [
+    values.employeeFirstName,
+    values.employeeLastName,
+    values.employeeRole,
+    values.updateManager,
+  ];
+  console.log("adding to employees");
   const result = await queryPromise(query, input);
+  console.log(result);
+
+  // updates manager table
+  const query2 = "INSERT INTO managers (first_name, last_name) VALUES (?,?)";
+  const input2 = [values.employeeFirstName, values.employeeLastName];
+
+  console.log("adding to manager list");
+  const result2 = await queryPromise(query2, input2);
+  console.log(result2);
+
   viewEmployees();
-  init();
-};
-
-// addEmployee(employeeTest);
-
-// const deptTest = ["Marketing"];
+}
 
 // query add department to data base
 async function addDept(values) {
@@ -142,38 +160,42 @@ async function addDept(values) {
 
   const result = await queryPromise(query, input);
   viewDept();
-  init();
 }
-
-// const roleTest = ["Crash Test Dummy", '50', '1'];
 
 // query add role to data base
 async function addRole(values) {
-  const query = "INSERT INTO roles (title, salary, department_id) VALUES (?, ?, ?)";
+  const query =
+    "INSERT INTO roles (title, salary, department_id) VALUES (?, ?, ?)";
   console.log(values);
   const input = [values.role, values.roleSalary, values.assignDept];
 
   const result = await queryPromise(query, input);
   viewRoles();
-  init();
-
-
-  // console.log(values);
-  // const result = db.query(
-  //   "INSERT INTO roles (title, salary, department_id) VALUES (?,?,?)",
-  //   values
-  // );
 }
 
-//questions
-// What would you like to do?
-// Options: View all depts, view all employees,add a dept
-// add a role, add an employee, update an employee role
+async function updateEmployeeRole(values) {
+  console.log(values);
+  const query = "UPDATE employees SET role_id = ? WHERE id = ?";
+  // creates array with values input by the user
+  const input = [values.employeeRole, values.selectEmployee];
+  const result = await queryPromise(query, input);
+  viewEmployees();
+}
 
-async function createQuestions(){
+async function updateEmployeeManager(values) {
+  console.log(values);
+  const query = "UPDATE employees SET manager_id = ? WHERE id = ?";
+  // creates array with values input by the user
+  const input = [values.updateManager, values.selectEmployee];
+  const result = await queryPromise(query, input);
+  viewEmployees();
+}
+
+async function createQuestions() {
   const employees = await getEmployeeNames();
   const roles = await getRoleNames();
   const departments = await getDeptNames();
+  const managers = await getManagerNames();
 
   const triggerQuestion = [
     // initial selector question
@@ -376,7 +398,7 @@ async function createQuestions(){
       message: "Which manager are they assigned to?",
       // choices will be pulled from mysql
       // object will be { label : roleName, value: roleId}
-      choices: employees,
+      choices: managers,
       when: ({ next }) => {
         if (next === "updateEmployeeManager" || next === "addEmployee") {
           return true;
@@ -388,7 +410,7 @@ async function createQuestions(){
   ];
 
   return triggerQuestion;
-};
+}
 
 //function to route next set of questions
 async function routeQuestion(value) {
@@ -399,16 +421,18 @@ async function routeQuestion(value) {
     case "employeeAll":
       return viewEmployees();
     case "roleAll":
-        return viewRoles();
+      return viewRoles();
     case "addDept":
-        return addDept(value);
+      return addDept(value);
     case "addEmployee":
-        return addEmployee(value);
+      return addEmployee(value);
     case "addRole":
-        return addRole(value);
+      return addRole(value);
     case "updateEmployeeRole":
-        return updateEmployeeRole(value);
-  };
+      return updateEmployeeRole(value);
+    case "updateEmployeeManager":
+      return updateEmployeeManager(value);
+  }
   // console.log(nextValues[value]);
   // return nextValues[value];
 }
@@ -416,23 +440,25 @@ async function routeQuestion(value) {
 // function to initialize app
 async function init() {
   const triggerQuestion = await createQuestions();
-    // viewEmployees();
+  // viewEmployees();
   inquirer.prompt(triggerQuestion).then(function (response) {
     routeQuestion(response);
-    console.log("init: ");
-    console.log(response);
-    return response;
   });
 }
 
-async function continuePrompt(){
-  const confirm = await inquirer.prompt(
-    {
-      type: 'confirm',
-      name: 'continue',
-      message: 'Would you like to continue?'
-    }
-  )
+async function continuePrompt() {
+  const confirm = await inquirer.prompt({
+    type: "confirm",
+    name: "continue",
+    message: "Would you like to continue?",
+  });
+  if (confirm.continue) {
+    init();
+  } else {
+    // exit application
+    db.end();
+  }
 }
 
+// createNoneManager();
 init();
