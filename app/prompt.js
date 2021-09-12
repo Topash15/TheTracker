@@ -2,18 +2,11 @@
 const inquirer = require("inquirer");
 const mysql = require("mysql2");
 const cTable = require("console.table");
-// const ConfirmPrompt = require("inquirer/lib/prompts/confirm");
+const config = require("./config/config");
 
 // Connect to database
 const db = mysql.createConnection(
-  {
-    host: "localhost",
-    // MySQL username,
-    user: "root",
-    // {TODO: Add your MySQL password}
-    password: "",
-    database: "employees_db",
-  },
+  config,
   console.log(`Connected to the employees_db database.`)
 );
 
@@ -114,8 +107,6 @@ async function viewDept() {
   console.table(result);
   continuePrompt();
 }
-
-// viewDept();
 
 // view all roles
 async function viewRoles() {
@@ -432,6 +423,8 @@ async function routeQuestion(value) {
       return updateEmployeeRole(value);
     case "updateEmployeeManager":
       return updateEmployeeManager(value);
+    case "exit":
+      return db.end();
   }
   // console.log(nextValues[value]);
   // return nextValues[value];
