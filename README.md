@@ -7,6 +7,8 @@
   
   This application is used to create databases of employees. It lists the employee's names, managers, job title, department, and salary.
   
+  [Click here to watch a video demo!](https://drive.google.com/file/d/1YJNjzts7fAdORFgA_hHJ2T9SUCBpuLNf/view)
+  
   ## Table of Contents
   
   * [Installation](#installation)
